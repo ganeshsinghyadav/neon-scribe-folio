@@ -1,13 +1,15 @@
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import emailjs from 'emailjs-com';
 
 const Contact = () => {
   const { toast } = useToast();
+  const form = useRef<HTMLFormElement>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,20 +26,36 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
-      toast({
-        title: "Message sent successfully!",
-        description: "Thanks for reaching out. I'll get back to you soon.",
+    if (form.current) {
+      emailjs.sendForm(
+        'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
+        'YOUR_TEMPLATE_ID', // Replace with your EmailJS template ID
+        form.current,
+        'YOUR_USER_ID' // Replace with your EmailJS user ID
+      )
+      .then((result) => {
+        toast({
+          title: "Message sent successfully!",
+          description: "Thanks for reaching out. I'll get back to you soon.",
+        });
+        
+        setFormData({
+          name: '',
+          email: '',
+          message: ''
+        });
+      })
+      .catch((error) => {
+        toast({
+          title: "Failed to send message",
+          description: "Please try again later or contact directly via email.",
+          variant: "destructive"
+        });
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
-      
-      setFormData({
-        name: '',
-        email: '',
-        message: ''
-      });
-      setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -140,7 +158,7 @@ const Contact = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
             viewport={{ once: true, margin: "-100px" }}
           >
-            <form onSubmit={handleSubmit} className="space-y-6 glass-card p-6 rounded-lg">
+            <form ref={form} onSubmit={handleSubmit} className="space-y-6 glass-card p-6 rounded-lg">
               <div className="space-y-2">
                 <label htmlFor="name" className="text-sm font-medium">Name</label>
                 <Input
